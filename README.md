@@ -4,7 +4,7 @@ Simple and functional, discover the True Form's of your fitness movements! </br>
 </p>  
 </br>  
 
-## App Features (v1)
+## App Features
 * 100% Kotlin,
 * MVVM with Use Case pattern,
 * Single Activity pattern,
