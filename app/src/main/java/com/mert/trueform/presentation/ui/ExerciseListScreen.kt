@@ -3,6 +3,7 @@ package com.mert.trueform.presentation.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,12 +21,24 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -42,11 +55,16 @@ fun ExerciseListScreen(
 ) {
     val exercises = viewModel.exercises.collectAsState()
     val listState = rememberLazyListState()
+    var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
 
-    LaunchedEffect(listState) {
+    val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(listState, viewModel.isSearching) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
             .collect { lastVisibleItemIndex ->
-                if (lastVisibleItemIndex == exercises.value.lastIndex) {
+                if (lastVisibleItemIndex == exercises.value.lastIndex && !viewModel.isSearching) {
                     viewModel.loadExercises()
                 }
             }
@@ -54,13 +72,39 @@ fun ExerciseListScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Exercises", color = MaterialTheme.colorScheme.onPrimary) },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        focusManager.clearFocus()
+                        keyboardController?.hide()
+                    }
+            ) {
+                CenterAlignedTopAppBar(
+                    title = { Text("Exercises", color = MaterialTheme.colorScheme.onPrimary) },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface
+                    )
                 )
-            )
+                TextField(
+                    value = searchQuery,
+                    onValueChange = {
+                        searchQuery = it
+                        viewModel.getSearchedExercises(it.text)
+                    },
+                    label = { Text("Search Exercises") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .focusRequester(focusRequester)
+                        .onFocusChanged { focusState ->
+                            if (!focusState.isFocused) {
+                                keyboardController?.hide()
+                            }
+                        }
+                )
+            }
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
@@ -70,6 +114,14 @@ fun ExerciseListScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = {
+                            focusManager.clearFocus()
+                            keyboardController?.hide()
+                        }
+                    )
+                }
         ) {
             itemsIndexed(exercises.value) { index, exercise ->
                 ExerciseItem(
@@ -80,7 +132,7 @@ fun ExerciseListScreen(
                 )
             }
 
-            if (viewModel.isLoading) {
+            if (viewModel.isLoading && !viewModel.isSearching) {
                 item {
                     CircularProgressIndicator(
                         modifier = Modifier

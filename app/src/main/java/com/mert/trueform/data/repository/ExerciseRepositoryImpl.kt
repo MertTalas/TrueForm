@@ -20,4 +20,25 @@ class ExerciseRepositoryImpl(
             e.printStackTrace()
         }
     }
+
+    override suspend fun getExerciseDetail(id: String): Exercise {
+        val response = apiService.getExerciseDetail(id)
+        return response.toDomainModel()
+    }
+
+    override suspend fun getSearchedExercises(query: String): Flow<List<Exercise>> = flow {
+        try {
+            val response = apiService.searchExercises(query)
+            val exercises = response.map { it.toDomainModel() }
+
+            val filteredExercises = exercises.filter { exercise ->
+                exercise.name.contains(query, ignoreCase = true)
+            }
+
+            emit(filteredExercises)
+        } catch (e: Exception) {
+            emit(emptyList())
+            e.printStackTrace()
+        }
+    }
 }

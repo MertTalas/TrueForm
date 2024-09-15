@@ -8,7 +8,9 @@ data class ApiExercise(
     val bodyPart: String,
     val equipment: String,
     val gifUrl: String,
-    val target: String
+    val target: String,
+    val secondaryMuscles: List<String>,
+    val instructions: List<String>
 ) {
     fun toDomainModel(): Exercise {
         return Exercise(
@@ -17,7 +19,9 @@ data class ApiExercise(
             bodyPart = bodyPart,
             equipment = equipment,
             gifUrl = gifUrl,
-            target = target
+            target = target,
+            secondaryMuscles = secondaryMuscles,
+            instructions = instructions
         )
     }
 }

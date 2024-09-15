@@ -2,8 +2,10 @@ package com.mert.trueform.presentation.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.mert.trueform.presentation.ui.ExerciseListScreen
 import com.mert.trueform.presentation.ui.ExerciseDetailScreen
 
@@ -13,8 +15,11 @@ fun NavigationGraph(navController: NavHostController) {
         composable(route = Screen.ExerciseList.route) {
             ExerciseListScreen(navController = navController)
         }
-        composable(route = Screen.ExerciseDetail.route) { backStackEntry ->
-            val exerciseId = backStackEntry.arguments?.getString("exerciseId")
+        composable(
+            route = Screen.ExerciseDetail.route,
+            arguments = listOf(navArgument("exerciseId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val exerciseId = backStackEntry.arguments?.getString("exerciseId") ?: ""
             ExerciseDetailScreen(navController = navController, exerciseId = exerciseId)
         }
     }

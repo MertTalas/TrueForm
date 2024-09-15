@@ -2,13 +2,12 @@ package com.mert.trueform.domain.usecase
 
 import com.mert.trueform.domain.model.Exercise
 import com.mert.trueform.domain.repository.ExerciseRepository
-import kotlinx.coroutines.flow.Flow
 
-class GetExercisesUseCase(
+class GetExerciseDetailUseCase(
     private val repository: ExerciseRepository
 ) {
 
-    suspend operator fun invoke(limit: Int, offset: Int): Flow<List<Exercise>> {
-        return repository.getExercises(limit, offset)
+    suspend operator fun invoke(id: String): Exercise {
+        return repository.getExerciseDetail(id)
     }
 }

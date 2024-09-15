@@ -92,6 +92,9 @@ dependencies {
     // Coil for Compose
     implementation(libs.coil.compose)
 
+    // Coil GIF
+    implementation(libs.coil.gif)
+
     // Navigation for Compose
     implementation(libs.navigation.compose)
 
