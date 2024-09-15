@@ -13,4 +13,7 @@ Simple and functional, discover the True Form's of your fitness movements! </br>
 * Jetpack Compose,
 * Jetpack Navigation,
 * Dependency Injection with Dagger-Hilt,
-* Material Design
+* Material Design,
+* Coil,
+* Timber,
+* OkHttp
