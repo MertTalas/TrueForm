@@ -25,7 +25,6 @@ class ExerciseListViewModel @Inject constructor(
     private val limit = 10
     var isLoading = false
     var isSearching = false
-    private var endReached = false
 
     init {
         loadExercises()

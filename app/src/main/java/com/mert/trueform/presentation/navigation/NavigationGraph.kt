@@ -11,6 +11,7 @@ import com.mert.trueform.presentation.ui.ExerciseDetailScreen
 
 @Composable
 fun NavigationGraph(navController: NavHostController) {
+
     NavHost(navController = navController, startDestination = Screen.ExerciseList.route) {
         composable(route = Screen.ExerciseList.route) {
             ExerciseListScreen(navController = navController)

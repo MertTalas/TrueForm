@@ -81,10 +81,9 @@ fun ExerciseListScreen(
                     }
             ) {
                 CenterAlignedTopAppBar(
-                    title = { Text("Exercises", color = MaterialTheme.colorScheme.onPrimary) },
+                    title = { Text("Exercises") },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = MaterialTheme.colorScheme.onSurface
+                        containerColor = MaterialTheme.colorScheme.surface
                     )
                 )
                 TextField(
@@ -123,7 +122,7 @@ fun ExerciseListScreen(
                     )
                 }
         ) {
-            itemsIndexed(exercises.value) { index, exercise ->
+            itemsIndexed(exercises.value) { _, exercise ->
                 ExerciseItem(
                     exercise = exercise,
                     onItemClick = {
