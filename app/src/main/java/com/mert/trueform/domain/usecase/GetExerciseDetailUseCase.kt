@@ -2,8 +2,9 @@ package com.mert.trueform.domain.usecase
 
 import com.mert.trueform.domain.model.Exercise
 import com.mert.trueform.domain.repository.ExerciseRepository
+import javax.inject.Inject
 
-class GetExerciseDetailUseCase(
+class GetExerciseDetailUseCase @Inject constructor(
     private val repository: ExerciseRepository
 ) {
 
