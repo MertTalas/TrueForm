@@ -1,6 +1,6 @@
 # TrueForm
-<p align="center">    
-Project Topic: Simple and functional, discover the True Form's of your fitness movements! </br>
+<p align="start">    
+Simple and functional, discover the True Form's of your fitness movements! </br>
 </p>  
 </br>  
 
@@ -12,4 +12,5 @@ Project Topic: Simple and functional, discover the True Form's of your fitness m
 * Flow,
 * Jetpack Compose,
 * Jetpack Navigation,
-* Dependency Injection with Dagger-Hilt
+* Dependency Injection with Dagger-Hilt,
+* Material Design
