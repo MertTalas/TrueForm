@@ -65,8 +65,6 @@ class ExerciseListViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-            } finally {
-                _isSearching.value = false
             }
         }
     }
