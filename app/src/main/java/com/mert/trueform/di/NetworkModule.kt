@@ -1,10 +1,6 @@
 package com.mert.trueform.di
 
 import com.mert.trueform.data.remote.api.ApiService
-import com.mert.trueform.data.repository.ExerciseRepositoryImpl
-import com.mert.trueform.domain.repository.ExerciseRepository
-import com.mert.trueform.domain.usecase.GetExerciseDetailUseCase
-import com.mert.trueform.domain.usecase.GetExercisesUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -18,7 +14,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object AppModule {
+object NetworkModule {
 
     @Provides
     @Singleton
@@ -47,23 +43,5 @@ object AppModule {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(ApiService::class.java)
-    }
-
-    @Provides
-    @Singleton
-    fun provideExerciseRepository(apiService: ApiService): ExerciseRepository {
-        return ExerciseRepositoryImpl(apiService)
-    }
-
-    @Provides
-    @Singleton
-    fun provideGetExercisesUseCase(repository: ExerciseRepository): GetExercisesUseCase {
-        return GetExercisesUseCase(repository)
-    }
-
-    @Provides
-    @Singleton
-    fun provideGetExerciseDetailUseCase(repository: ExerciseRepository): GetExerciseDetailUseCase {
-        return GetExerciseDetailUseCase(repository)
     }
 }
