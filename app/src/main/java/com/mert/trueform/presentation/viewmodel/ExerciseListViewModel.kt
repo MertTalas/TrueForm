@@ -8,7 +8,6 @@ import com.mert.trueform.domain.usecase.GetSearchedExercisesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -21,19 +20,23 @@ class ExerciseListViewModel @Inject constructor(
     private val _exercises = MutableStateFlow<List<Exercise>>(emptyList())
     val exercises: StateFlow<List<Exercise>> get() = _exercises
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> get() = _isLoading
+
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> get() = _isSearching
+
     private var currentOffset = 0
     private val limit = 10
-    var isLoading = false
-    var isSearching = false
 
     init {
         loadExercises()
     }
 
     fun loadExercises() {
-        if (isLoading || isSearching) return
+        if (_isLoading.value || _isSearching.value) return
 
-        isLoading = true
+        _isLoading.value = true
         viewModelScope.launch {
             try {
                 getExercisesUseCase(limit, currentOffset).collect { newExercises ->
@@ -43,21 +46,18 @@ class ExerciseListViewModel @Inject constructor(
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
-                isLoading = false
+                _isLoading.value = false
             }
         }
     }
 
     fun getSearchedExercises(query: String) {
         if (query.isBlank()) {
-            isSearching = false
-            _exercises.value = emptyList()
-            currentOffset = 0
-            loadExercises()
+            clearSearch()
             return
         }
 
-        isSearching = true
+        _isSearching.value = true
         viewModelScope.launch {
             try {
                 getSearchedExercisesUseCase(query).collect { searchResults ->
@@ -65,7 +65,16 @@ class ExerciseListViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+            } finally {
+                _isSearching.value = false
             }
         }
+    }
+
+    fun clearSearch() {
+        _isSearching.value = false
+        _exercises.value = emptyList()
+        currentOffset = 0
+        loadExercises()
     }
 }

@@ -4,7 +4,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,11 +15,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -53,18 +61,17 @@ fun ExerciseListScreen(
     navController: NavController,
     viewModel: ExerciseListViewModel = hiltViewModel()
 ) {
-    val exercises = viewModel.exercises.collectAsState()
+    val exercises by viewModel.exercises.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val isSearching by viewModel.isSearching.collectAsState()
+
     val listState = rememberLazyListState()
     var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
 
-    val focusRequester = remember { FocusRequester() }
-    val focusManager = LocalFocusManager.current
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    LaunchedEffect(listState, viewModel.isSearching) {
+    LaunchedEffect(listState) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
             .collect { lastVisibleItemIndex ->
-                if (lastVisibleItemIndex == exercises.value.lastIndex && !viewModel.isSearching) {
+                if (lastVisibleItemIndex == exercises.lastIndex && !isSearching) {
                     viewModel.loadExercises()
                 }
             }
@@ -72,73 +79,136 @@ fun ExerciseListScreen(
 
     Scaffold(
         topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        focusManager.clearFocus()
-                        keyboardController?.hide()
-                    }
-            ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
                 CenterAlignedTopAppBar(
                     title = { Text("Exercises") },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surface
                     )
                 )
-                TextField(
-                    value = searchQuery,
-                    onValueChange = {
-                        searchQuery = it
-                        viewModel.getSearchedExercises(it.text)
-                    },
-                    label = { Text("Search Exercises") },
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
-                        .focusRequester(focusRequester)
-                        .onFocusChanged { focusState ->
-                            if (!focusState.isFocused) {
-                                keyboardController?.hide()
+                        .background(MaterialTheme.colorScheme.surface)
+                ) {
+                    SearchBar(
+                        searchQuery = searchQuery,
+                        onQueryChange = { searchQuery = it },
+                        onSearch = {
+                            if (searchQuery.text.isNotEmpty()) {
+                                viewModel.getSearchedExercises(searchQuery.text)
+                            } else {
+                                viewModel.clearSearch()
                             }
+                        },
+                        onClear = {
+                            searchQuery = TextFieldValue("")
+                            viewModel.clearSearch()
                         }
-                )
+                    )
+                }
             }
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        LazyColumn(
-            state = listState,
-            contentPadding = paddingValues,
+        ExerciseList(
+            exercises = exercises,
+            listState = listState,
+            paddingValues = paddingValues,
+            isLoading = isLoading,
+            isSearching = isSearching,
+            onItemClick = { exerciseId ->
+                navController.navigate(Screen.ExerciseDetail.createRoute(exerciseId))
+            }
+        )
+    }
+}
+
+@Composable
+fun SearchBar(
+    searchQuery: TextFieldValue,
+    onQueryChange: (TextFieldValue) -> Unit,
+    onSearch: () -> Unit,
+    onClear: () -> Unit
+) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusRequester = remember { FocusRequester() }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .focusRequester(focusRequester)
+    ) {
+        TextField(
+            value = searchQuery,
+            onValueChange = onQueryChange,
+            label = { Text("Search Exercises") },
             modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onTap = {
-                            focusManager.clearFocus()
-                            keyboardController?.hide()
-                        }
-                    )
+                .weight(1f)
+                .onFocusChanged { focusState ->
+                    if (!focusState.isFocused) {
+                        keyboardController?.hide()
+                    }
+                },
+            trailingIcon = {
+                if (searchQuery.text.isNotEmpty()) {
+                    IconButton(onClick = onClear) {
+                        Icon(imageVector = Icons.Default.Close, contentDescription = "Clear Search")
+                    }
                 }
-        ) {
-            itemsIndexed(exercises.value) { _, exercise ->
-                ExerciseItem(
-                    exercise = exercise,
-                    onItemClick = {
-                        navController.navigate(Screen.ExerciseDetail.createRoute(exercise.id))
+            }
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Button(onClick = onSearch) {
+            Text("Search")
+        }
+    }
+}
+
+@Composable
+fun ExerciseList(
+    exercises: List<Exercise>,
+    listState: LazyListState,
+    paddingValues: PaddingValues,
+    isLoading: Boolean,
+    isSearching: Boolean,
+    onItemClick: (String) -> Unit
+) {
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LazyColumn(
+        state = listState,
+        contentPadding = paddingValues,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        focusManager.clearFocus()
+                        keyboardController?.hide()
                     }
                 )
             }
+    ) {
+        itemsIndexed(exercises) { _, exercise ->
+            ExerciseItem(
+                exercise = exercise,
+                onItemClick = { onItemClick(exercise.id) }
+            )
+        }
 
-            if (viewModel.isLoading && !viewModel.isSearching) {
-                item {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    )
-                }
+        if (isLoading && !isSearching) {
+            item {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                )
             }
         }
     }
